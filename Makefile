@@ -14,7 +14,7 @@ open_model: models.png
 	open models.png
 
 models.png: */models.py
-	python manage.py graph_models -g -o models.png card
+	python manage.py graph_models -g -o models.png card tournament
 
 clean:
 	rm -f models.png
