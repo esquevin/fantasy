@@ -1,4 +1,8 @@
-from django.db import models
+from django.db import models, IntegrityError
+from django.contrib.auth import get_user_model
+from card.models import PlayerCard
+
+User = get_user_model()
 
 
 class Tournament(models.Model):
@@ -23,3 +27,43 @@ class League(models.Model):
 
     def __str__(self):
         return f"{self.name} – {self.tournament}"
+
+
+class TeamManager(models.Manager):
+    def complete(self):
+        return self.annotate(num_players=models.Count("player_cards")).filter(
+            num_players=5
+        )
+
+
+class Team(models.Model):
+    """
+    A team is made of 5 player cards.
+    A user can only have one team per league.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    player_cards = models.ManyToManyField(PlayerCard, through="TeamPlayerCard")
+    objects = TeamManager()
+
+    def is_complete(self):
+        return self.player_cards.count() == 5
+
+    def add_player_card(self, player_card: PlayerCard):
+        if self.player_cards.count() < 5:
+            TeamPlayerCard.objects.create(team=self, player_card=player_card)
+        else:
+            raise IntegrityError("team cannot have more than 5 player cards")
+
+
+class TeamPlayerCard(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    player_card = models.ForeignKey(PlayerCard, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["team", "player_card"],
+                name="unicity_of_player_card_in_team",
+            ),
+        ]
