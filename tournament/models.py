@@ -43,6 +43,7 @@ class Team(models.Model):
     """
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    league = models.ForeignKey(League, null=True, on_delete=models.CASCADE)
     player_cards = models.ManyToManyField(PlayerCard, through="TeamPlayerCard")
     objects = TeamManager()
 
@@ -54,6 +55,24 @@ class Team(models.Model):
             TeamPlayerCard.objects.create(team=self, player_card=player_card)
         else:
             raise IntegrityError("team cannot have more than 5 player cards")
+
+    def is_submitted(self):
+        return self.league is not None
+
+    def sumbit_in(self, league: League):
+        if self.is_complete():
+            self.league = league
+            self.save()
+        else:
+            raise ValueError("team is not complete")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "league"],
+                name="a_user_can_have_one_team_per_league",
+            ),
+        ]
 
 
 class TeamPlayerCard(models.Model):
