@@ -21,6 +21,7 @@ class PlayerCard(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    bonus = models.FloatField(default=1.0)
 
     def __str__(self):
-        return f"{self.player}"
+        return f"{self.player} – {self.bonus}"
