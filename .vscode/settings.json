@@ -1,0 +1,8 @@
+{
+  "python.pythonPath": "/Users/gesquevin/.pyenv/versions/tournament/bin/python",
+  "python.linting.pylintArgs": [
+    "--load-plugins",
+    "pylint_django",
+    "--django-settings-module=fantasy.settings"
+  ]
+}
