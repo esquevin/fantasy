@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.db import IntegrityError
+from django.db import transaction
 from .models import User
 from .models import Team
 from .models import League
@@ -106,3 +107,31 @@ class TeamTests(TestCase):
         team.sumbit_in(league)
 
         self.assertEqual(team.league, league)
+
+    def test_a_player_card_can_only_be_used_once_in_a_tournament(self):
+        user = User.objects.create()
+        team1 = Team.objects.create(user=user)
+        team2 = Team.objects.create(user=user)
+        now = timezone.now()
+        tournament = Tournament.objects.create(start=now, end=now + timedelta(4))
+        league1 = League.objects.create(tournament=tournament)
+        league2 = League.objects.create(tournament=tournament)
+
+        player = Player.objects.create(first_name="", last_name="")
+
+        shared_card = PlayerCard.objects.create(user=user, player=player)
+        team1.add_player_card(shared_card)
+        team2.add_player_card(shared_card)
+
+        for i in range(4):
+            team1.add_player_card(PlayerCard.objects.create(user=user, player=player))
+            team2.add_player_card(PlayerCard.objects.create(user=user, player=player))
+        team1.sumbit_in(league1)
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                team2.sumbit_in(league2)
+
+        team1.unsubmit()
+
+        team2.sumbit_in(league2)

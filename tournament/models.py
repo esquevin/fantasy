@@ -1,3 +1,5 @@
+from typing import List
+
 from django.db import models, IntegrityError
 from django.contrib.auth import get_user_model
 from card.models import PlayerCard
@@ -15,6 +17,15 @@ class Tournament(models.Model):
     # easily
     start = models.DateTimeField()
     end = models.DateTimeField()
+
+    def register_player_cards(self, player_cards: List[PlayerCard]):
+        for card in player_cards:
+            TournamentPlayerCard.objects.create(tournament=self, player_card=card)
+
+    def unregister_player_cards(self, player_cards: List[PlayerCard]):
+        TournamentPlayerCard.objects.filter(
+            tournament=self, player_card__in=player_cards
+        ).delete()
 
     def __str__(self):
         return f"Tournament {self.start} ({self.end})"
@@ -59,9 +70,16 @@ class Team(models.Model):
     def is_submitted(self):
         return self.league is not None
 
+    def unsubmit(self):
+        if self.is_submitted():
+            self.league.tournament.unregister_player_cards(self.player_cards.all())
+            self.league = None
+            self.save()
+
     def sumbit_in(self, league: League):
         if self.is_complete():
             self.league = league
+            self.league.tournament.register_player_cards(self.player_cards.all())
             self.save()
         else:
             raise ValueError("team is not complete")
@@ -84,5 +102,18 @@ class TeamPlayerCard(models.Model):
             models.UniqueConstraint(
                 fields=["team", "player_card"],
                 name="unicity_of_player_card_in_team",
+            ),
+        ]
+
+
+class TournamentPlayerCard(models.Model):
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE)
+    player_card = models.ForeignKey(PlayerCard, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tournament", "player_card"],
+                name="unicity_of_player_card_in_tournament",
             ),
         ]
