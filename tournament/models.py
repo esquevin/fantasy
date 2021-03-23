@@ -56,6 +56,10 @@ class Team(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     league = models.ForeignKey(League, null=True, on_delete=models.CASCADE)
     player_cards = models.ManyToManyField(PlayerCard, through="TeamPlayerCard")
+
+    score = models.FloatField(default=0.0, db_index=True)
+    creation_date = models.DateTimeField(auto_now_add=True)
+
     objects = TeamManager()
 
     def is_complete(self):
