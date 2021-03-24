@@ -1,3 +1,15 @@
+run: migrate
+	python manage.py runserver
+
+test: 
+	python manage.py test
+
+migrate:
+	python manage.py migrate
+
+install:
+	pip install -r requirements.txt
+
 open_model: models.png
 	open models.png
 
