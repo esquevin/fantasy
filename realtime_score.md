@@ -75,6 +75,11 @@ def async_update_team_score(team_id, player_id, delta_score):
     team.save()
 ```
 
+From there we can get a sorted list of teams per league by doing :
+
+```python
+Team.objects.filter(league=league_id).order_by('-score', '-creation_date')
+```
 
 ## Tradeoff
 
