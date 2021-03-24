@@ -81,6 +81,30 @@ From there we can get a sorted list of teams per league by doing :
 Team.objects.filter(league=league_id).order_by('-score', '-creation_date')
 ```
 
+## To get the rank of teams: 
+
+We use native sql Rank
+
+# window function usage
+from django.db.models.expressions import Window
+from django.db.models.functions import Rank
+
+Team.objects.annotate(rank=Window(
+    expression=Rank(),
+    order_by=[F('score').desc(), F('creation_date').desc()],
+    partition_by=[F('league')]))
+
+# generated sql
+SELECT "myapp_gamescore"."id",
+   "myapp_gamescore"."user_id",
+   "myapp_gamescore"."score",
+   RANK() OVER (
+     PARTITION BY "myapp_gamescore"."user_id"
+     ORDER BY "myapp_gamescore"."score" DESC
+   ) AS "rank"
+FROM "myapp_gamescore"
+
+
 ## Tradeoff
 
 By doing this denormalization we would end up with a wrong score if some message were 
