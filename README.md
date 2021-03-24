@@ -14,6 +14,11 @@ Install the dependencies
 
 ## Play with it
 
+Check the models
+
+`make open_model`
+
+
 You can run the tests.
 
 `make test`
